@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <style>
+        :root {
+            --bg: #FFFFFF;
+            --fg: #000000;
+            --ln: #0f0ff0
+        }
+        .dark {
+            --bg: #0a0a0a;
+            --fg: #FFFFFF;
+            --ln: #a0a0f0
+        }
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+        }
+        a {
+            color: var(--ln);
+        }
+        td {
+            padding-right: 5em;
+        }
+    </style>
+    </head>
+    <body>
+        <h1>/{{ path }}</h1>
+        <hr>
+        <pre><table>
+            {% if path %}
+            <tr>
+            {#
+                HTML is a bit weird, apparently to go up one level you
+                use href ./ EXCEPT when you want to go back to root,
+                which you use / for. Using ./ to go up to root doesn't work
+                for some reason.
+            #}
+            {% if '/' in path.strip('/') %}
+            <td><a href="./">../</a></td>
+            {% else %}
+            <td><a href="/">../</a></td>
+            {% endif %}
+            <td>-</td>
+            <td>-</td>
+            <td>-</td>
+            </tr>
+            {% endif %}
+            {% for file in files %}
+            <tr>
+            {% if file.ext.lower() in VIDEOEXTS %}
+            <td><a href="/{{ path }}{{ file.name }}?m3u8">{{ file.name }}</a></td>
+            <td>[<a href="/{{ path }}{{ file.name }}?play">▶</a>, <a href="/{{ path }}{{ file.name }}">DL</a>]</td>
+            {% else %}
+            <td><a href="/{{ path }}{{ file.name }}">{{ file.name }}{% if file.isdir %}/{% endif %}</a></td>
+            <td>-</td>
+            {% endif %}
+            <td>{{ file.lastmodified }}</td>
+            <td>{% if file.isdir %}-{% else %}{{ file.size }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </table></pre>
+        <hr>
+        <pre>[<a href="/">Root</a>] [<a id="lightswitch" href="#"></a>] [<a href="https://github.com/Fam0r/VideoIndex">Repo</a>]</pre>
+        <script>
+            var icon = ["☾", "☀"];
+            var dark = (getCookie('dark') === 'true');
+
+            function lightswitch() {
+                dark = !dark;
+                document.body.classList.toggle("dark");
+                document.getElementById('lightswitch').textContent = icon[dark | 0];
+                setCookie('dark', dark);
+            }
+            function getCookie(name) {
+                var val = document.cookie.replace("/(?:(?:^|.*;\s*)"+name+"\s*\=\s*([^;]*).*$)|^.*$/", "$1");
+                if (val) return val.split(name+"=").pop();
+                else return null;
+            }
+            function setCookie(name, value, maxage) {
+                document.cookie = name + "=" + value +";max-age=" + maxage +";path=/";
+            }
+
+            if (dark) document.body.classList.value = 'dark';
+            document.getElementById('lightswitch').textContent = icon[dark | 0];
+            document.getElementById('lightswitch').addEventListener("click", lightswitch);
+        </script>
+    </body>
+</html>
