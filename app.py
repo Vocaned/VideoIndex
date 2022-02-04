@@ -7,8 +7,10 @@ from datetime import datetime
 app = Flask(__name__)
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
+
 FILES = 'files'
 VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
+ALLOWED = ['.srt', '.vtt']
 HIDE_NONVIDEO = True
 
 class File:
@@ -30,8 +32,8 @@ def bytes2human(n: int) -> str:
     for s in reversed(symbols):
         if n >= prefix[s]:
             value = float(n) / prefix[s]
-            return f'{value:.1f}{s}'
-    return f'{n}B'
+            return '{0:.1f}{1}'.format(value, s)
+    return '{0}B'.format(n)
 
 def send_m3u8(path):
     data = ['#EXTM3U', request.host_url + path.rstrip('/')]
@@ -44,26 +46,32 @@ def send_m3u8(path):
 @app.route("/")
 @app.route("/<path:path>")
 def index(path=""):
-    path = f'{path.strip("/")}/' if path else ""
+    path = '{0}/'.format(path.strip("/")) if path else ""
     filepath = safe_join(FILES, path)
+
+    if filepath.endswith('/play'):
+        filepath = filepath[:-5]
+        if not os.path.isfile(filepath):
+            abort(404)
+        return render_template('player.html', file=filepath)
+    if filepath.endswith('/m3u8'):
+        filepath = filepath[:-5]
+        path = path[:-5]
+        if not os.path.isfile(filepath):
+            abort(404)
+        return send_m3u8(path)
 
     if not os.path.exists(filepath):
         abort(404)
 
     if os.path.isfile(filepath):
-        if request.query_string:
-            if request.query_string == b'play':
-                return render_template('player.html', file=filepath)
-            if request.query_string == b'm3u8':
-                return send_m3u8(path)
-
-        if HIDE_NONVIDEO and os.path.splitext(filepath)[1].lower() not in VIDEOEXTS:
+        if HIDE_NONVIDEO and os.path.splitext(filepath)[1].lower() not in VIDEOEXTS and os.path.splitext(filepath)[1].lower() not in ALLOWED:
             abort(404)
         return send_from_directory(FILES, path, as_attachment=True)
 
     files = [File(safe_join(FILES, path, p)) for p in os.listdir(filepath)]
     for f in files:
-        if HIDE_NONVIDEO and f.ext.lower() not in VIDEOEXTS and not f.isdir:
+        if HIDE_NONVIDEO and f.ext.lower() not in VIDEOEXTS and f.ext.lower() not in ALLOWED and not f.isdir:
             files.remove(f)
     files.sort(key=lambda f: (not f.isdir, f.name))
 
