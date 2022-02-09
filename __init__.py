@@ -8,10 +8,11 @@ import markdown
 app = Flask(__name__)
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
+app.jinja_env.globals['safe_join'] = safe_join
 
 FILES = 'files'
 VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
-ALLOWED = ['.srt', '.vtt', '.md']
+ALLOWED = ['.srt', '.vtt', '.md', '.nfo']
 HIDE_NONVIDEO = True
 
 class File:

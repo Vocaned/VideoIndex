@@ -5,12 +5,14 @@
         :root {
             --bg: #FFFFFF;
             --fg: #000000;
-            --ln: #0f0ff0
+            --ln: #0f0ff0;
+            --ls: #a00ff0;
         }
         .dark {
             --bg: #0a0a0a;
             --fg: #FFFFFF;
-            --ln: #a0a0f0
+            --ln: #a0a0f0;
+            --ls: #f0aff0;
         }
         body {
             background-color: var(--bg);
@@ -18,6 +20,9 @@
         }
         a {
             color: var(--ln);
+        }
+        .seen {
+            color: var(--ls);
         }
         td {
             padding-right: 5em;
@@ -53,10 +58,10 @@
             {% for file in files if not file.name == 'README.md' %}
             <tr>
             {% if file.ext.lower() in VIDEOEXTS %}
-            <td><a href="{{ url }}/{{ file.name }}/m3u8">{{ file.name }}</a></td>
-            <td>[<a href="{{ url }}/{{ file.name }}/play">▶</a>, <a href="{{ url }}/{{ file.name }}">DL</a>]</td>
+            <td><a id="{{ safe_join(url, file.name) }}" href="{{ safe_join(url, file.name) }}/m3u8">{{ file.name }}</a></td>
+            <td>[<a id="{{ safe_join(url, file.name) }}/seen" onclick="seen(this)" style="cursor:pointer;text-decoration:underline;">✘</a>, <a href="{{ safe_join(url, file.name) }}/play">▶</a>, <a href="{{ safe_join(url, file.name) }}">DL</a>]</td>
             {% else %}
-            <td><a href="{{ url }}/{{ file.name }}">{{ file.name }}{% if file.isdir %}/{% endif %}</a></td>
+            <td><a href="{{ safe_join(url, file.name) }}">{{ file.name }}{% if file.isdir %}/{% endif %}</a></td>
             <td>-</td>
             {% endif %}
             <td>{{ file.lastmodified }}</td>
@@ -69,6 +74,7 @@
         <script>
             var icon = ["☾", "☀"];
             var dark = (localStorage.getItem('dark') === 'true');
+            var seenList = (localStorage.getItem('seen') || '').split(';').filter(Boolean);
 
             function lightswitch() {
                 dark = !dark;
@@ -77,9 +83,31 @@
                 localStorage.setItem('dark', dark);
             }
 
+            function seen(el) {
+                var baseid = el.id.substring(0, el.id.lastIndexOf('/'));
+                var i = seenList.indexOf(baseid);
+                if (i !== -1) {
+                    seenList.splice(i, 1);
+                    document.getElementById(baseid).classList.value = '';
+                    el.textContent = '✘';
+                } else {
+                    seenList.push(baseid);
+                    document.getElementById(baseid).classList.value = 'seen';
+                    el.textContent = '✓';
+                }
+
+                localStorage.setItem('seen', seenList.join(';'));
+            }
+
             if (dark) document.body.classList.value = 'dark';
             document.getElementById('lightswitch').textContent = icon[dark | 0];
             document.getElementById('lightswitch').addEventListener("click", lightswitch);
+
+            seenList.forEach(n => {
+                if (document.getElementById(n) === null) return;
+                document.getElementById(n).classList.value = 'seen';
+                document.getElementById(n+'/seen').textContent = '✓';
+            });
         </script>
     </body>
 </html>
