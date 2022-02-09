@@ -10,7 +10,10 @@ app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 app.jinja_env.globals['safe_join'] = safe_join
 
-FILES = 'files'
+if 'FILEPATH' in os.environ:
+    FILES = os.environ['FILEPATH']
+else:
+    FILES = 'files'
 VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
 ALLOWED = ['.srt', '.vtt', '.md', '.nfo']
 HIDE_NONVIDEO = True
