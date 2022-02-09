@@ -1,7 +1,8 @@
-from flask import Flask, render_template, safe_join, send_from_directory, abort, request, make_response
+from flask import Flask, render_template, safe_join, send_from_directory, abort, request, make_response, Markup, url_for
 import os
 import stat
 from datetime import datetime
+import markdown
 
 
 app = Flask(__name__)
@@ -10,7 +11,7 @@ app.jinja_env.lstrip_blocks = True
 
 FILES = 'files'
 VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
-ALLOWED = ['.srt', '.vtt']
+ALLOWED = ['.srt', '.vtt', '.md']
 HIDE_NONVIDEO = True
 
 class File:
@@ -36,15 +37,15 @@ def bytes2human(n: int) -> str:
     return '{0}B'.format(n)
 
 def send_m3u8(path):
-    data = ['#EXTM3U', request.host_url + path.rstrip('/')]
+    data = ['#EXTM3U', request.host_url.rstrip('/') + url_for(request.endpoint) + "/" + path.rstrip('/')]
 
     resp = make_response('\n'.join(data))
     resp.mimetype = 'video/x-mpegurl'
     resp.headers.add('Content-Disposition', 'filename=video.m3u8')
     return resp
 
-@app.route("/")
-@app.route("/<path:path>")
+@app.route("/files")
+@app.route("/files/<path:path>")
 def index(path=""):
     path = '{0}/'.format(path.strip("/")) if path else ""
     filepath = safe_join(FILES, path)
@@ -65,14 +66,18 @@ def index(path=""):
         abort(404)
 
     if os.path.isfile(filepath):
-        if HIDE_NONVIDEO and os.path.splitext(filepath)[1].lower() not in VIDEOEXTS and os.path.splitext(filepath)[1].lower() not in ALLOWED:
-            abort(404)
-        return send_from_directory(FILES, path, as_attachment=True)
+        # Sending files should be handled by nginx
+        abort(500)
 
+    readme = None
     files = [File(safe_join(FILES, path, p)) for p in os.listdir(filepath)]
     for f in files:
+        if f.name.lower() == 'readme.md':
+            with open(os.path.join(filepath, f.name), 'r', encoding='utf-8') as tmp:
+                readme = Markup(markdown.markdown(tmp.read(), extensions=["fenced_code"]))
+            files.remove(f)
         if HIDE_NONVIDEO and f.ext.lower() not in VIDEOEXTS and f.ext.lower() not in ALLOWED and not f.isdir:
             files.remove(f)
     files.sort(key=lambda f: (not f.isdir, f.name))
 
-    return render_template("index.html", path=path, files=files, VIDEOEXTS=VIDEOEXTS)
+    return render_template("index.html", base_url=url_for(request.endpoint), url=url_for(request.endpoint, **request.view_args), path=path, files=files, readme=readme, VIDEOEXTS=VIDEOEXTS)

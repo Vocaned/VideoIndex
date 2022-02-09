@@ -26,6 +26,10 @@
     </head>
     <body>
         <h1>/{{ path }}</h1>
+        {% if readme %}
+        <hr>
+        {{ readme }}
+        {% endif %}
         <hr>
         <pre><table>
             {% if path %}
@@ -39,20 +43,20 @@
             {% if '/' in path.strip('/') %}
             <td><a href="./">../</a></td>
             {% else %}
-            <td><a href="/">../</a></td>
+            <td><a href="{{ base_url }}">../</a></td>
             {% endif %}
             <td>-</td>
             <td>-</td>
             <td>-</td>
             </tr>
             {% endif %}
-            {% for file in files %}
+            {% for file in files if not file.name == 'README.md' %}
             <tr>
             {% if file.ext.lower() in VIDEOEXTS %}
-            <td><a href="/{{ path }}{{ file.name }}.m3u8">{{ file.name }}</a></td>
-            <td>[<a href="/{{ path }}{{ file.name }}.play">▶</a>, <a href="/{{ path }}{{ file.name }}">DL</a>]</td>
+            <td><a href="{{ url }}/{{ file.name }}/m3u8">{{ file.name }}</a></td>
+            <td>[<a href="{{ url }}/{{ file.name }}/play">▶</a>, <a href="{{ url }}/{{ file.name }}">DL</a>]</td>
             {% else %}
-            <td><a href="/{{ path }}{{ file.name }}">{{ file.name }}{% if file.isdir %}/{% endif %}</a></td>
+            <td><a href="{{ url }}/{{ file.name }}">{{ file.name }}{% if file.isdir %}/{% endif %}</a></td>
             <td>-</td>
             {% endif %}
             <td>{{ file.lastmodified }}</td>
@@ -61,7 +65,7 @@
             {% endfor %}
         </table></pre>
         <hr>
-        <pre>[<a href="/">Root</a>] [<a id="lightswitch" href="#"></a>] [<a href="https://github.com/Fam0r/VideoIndex">Repo</a>]</pre>
+        <pre>[<a href="{{ base_url }}">Root</a>] [<a id="lightswitch" href="#"></a>] [<a href="https://github.com/Fam0r/VideoIndex">Repo</a>]</pre>
         <script>
             var icon = ["☾", "☀"];
             var dark = (getCookie('dark') === 'true');
@@ -77,8 +81,8 @@
                 if (val) return val.split(name+"=").pop();
                 else return null;
             }
-            function setCookie(name, value, maxage) {
-                document.cookie = name + "=" + value +";max-age=" + maxage +";path=/";
+            function setCookie(name, value) {
+                document.cookie = name + "=" + value +";max-age=2147483647;path=/";
             }
 
             if (dark) document.body.classList.value = 'dark';
