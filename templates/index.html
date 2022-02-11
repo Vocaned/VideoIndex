@@ -14,15 +14,19 @@
             --ln: #a0a0f0;
             --ls: #f0aff0;
         }
+        .link {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .seen {
+            color: var(--ls);
+        }
         body {
             background-color: var(--bg);
             color: var(--fg);
         }
         a {
             color: var(--ln);
-        }
-        .seen {
-            color: var(--ls);
         }
         td {
             padding-right: 5em;
@@ -59,7 +63,7 @@
             <tr>
             {% if file.ext.lower() in VIDEOEXTS %}
             <td><a id="{{ safe_join(url, file.name) }}" href="{{ safe_join(url, file.name) }}/m3u8">{{ file.name }}</a></td>
-            <td>[<a id="{{ safe_join(url, file.name) }}/seen" onclick="seen(this)" style="cursor:pointer;text-decoration:underline;">✘</a>, <a href="{{ safe_join(url, file.name) }}/play">▶</a>, <a href="{{ safe_join(url, file.name) }}">DL</a>]</td>
+            <td>[<a id="{{ safe_join(url, file.name) }}/seen" onclick="seen(this)" class="link">✘</a>, <a href="{{ safe_join(url, file.name) }}/play">▶</a>, <a href="{{ safe_join(url, file.name) }}">DL</a>]</td>
             {% else %}
             <td><a href="{{ safe_join(url, file.name) }}">{{ file.name }}{% if file.isdir %}/{% endif %}</a></td>
             <td>-</td>
@@ -70,7 +74,7 @@
             {% endfor %}
         </table></pre>
         <hr>
-        <pre>[<a href="{{ base_url }}">Root</a>] [<a id="lightswitch" href="#"></a>] [<a href="https://github.com/Fam0r/VideoIndex">Repo</a>]</pre>
+        <pre>[<a href="{{ base_url }}">Root</a>] [<a id="lightswitch" href="#"></a>] [<a href="https://github.com/Fam0r/VideoIndex">Repo</a>] [<a onclick="save()" class="link">Save</a>] [<a onclick="load()" class="link">Load</a>]</pre>
         <script>
             var icon = ["☾", "☀"];
             var dark = (localStorage.getItem('dark') === 'true');
@@ -97,6 +101,27 @@
                 }
 
                 localStorage.setItem('seen', seenList.join(';'));
+            }
+
+            function save() {
+                var code = prompt("Enter a passcode to save your settings under.\nYou can use this code to load your settings and seen files later.\n");
+                fetch("{{ base_url }}/save", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(localStorage)
+                }).then(async res => {
+                    alert(await res.text());
+                });
+            }
+            function load() {
+                var code = prompt("Enter a passcode to load your settings from.\n");
+                fetch("{{ base_url }}/load/" + code).then(async res => {
+                    localStorage = JSON.parse(await res.text());
+                    alert('Settings loaded. The site will be refreshed.');
+                    window.location.reload();
+                });
             }
 
             if (dark) document.body.classList.value = 'dark';

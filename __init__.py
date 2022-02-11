@@ -5,14 +5,14 @@ from datetime import datetime
 import markdown
 
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/files/static')
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 app.jinja_env.globals['safe_join'] = safe_join
 
 FILES = os.environ.get('FILEPATH', 'files')
 VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
-ALLOWED = ['.srt', '.vtt', '.md', '.nfo']
+ALLOWED = ['.srt', '.vtt', '.md', '.nfo', '.txt']
 HIDE_NONVIDEO = True
 
 class File:
@@ -45,6 +45,36 @@ def send_m3u8(path):
     resp.headers.add('Content-Disposition', 'filename=video.m3u8')
     return resp
 
+def nfo_renderer(path):
+    with open(path, 'r', encoding='cp437', errors='ignore') as f:
+        head = Markup("""<style>
+pre {
+    font-family: "ibm_vga_8x16";
+    font-size: 16px;
+    line-height: 100%;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+@font-face {
+    font-family: "ibm_vga_8x16";
+    src: url("/files/static/Web437_IBM_VGA_8x16.woff") format("woff");
+}
+</style>""")
+        lines = []
+        for line in f.readlines():
+            lines.append(line.rstrip()) # Strip trailing whitespaces to center the content properly
+
+        return render_template("content.html", body=Markup("<pre>") + '\n'.join(lines) + Markup("</pre>"), head=head)
+
+def md_renderer(path):
+    with open(path, 'r', encoding='utf-8') as f:
+        return render_template("content.html", body=Markup(markdown.markdown(f.read(), extensions=["fenced_code"])))
+
+def txt_renderer(path):
+    with open(path, 'r', encoding='utf-8') as f:
+        return render_template("content.html", body=Markup("<pre>") + f.read() + Markup("</pre>"))
+
 @app.route("/files")
 @app.route("/files/<path:path>")
 def index(path=""):
@@ -67,7 +97,14 @@ def index(path=""):
         abort(404)
 
     if os.path.isfile(filepath):
-        # Sending files should be handled by nginx
+        # Pass .nfo and .md files to this app, rest should be served by nginx for better playback performance
+        ext = os.path.splitext(filepath)[1]
+        if ext == '.nfo':
+            return nfo_renderer(filepath)
+        elif ext == '.md':
+            return md_renderer(filepath)
+        elif ext == '.txt':
+            return txt_renderer(filepath)
         abort(500)
 
     readme = None
@@ -80,5 +117,14 @@ def index(path=""):
         if HIDE_NONVIDEO and f.ext.lower() not in VIDEOEXTS and f.ext.lower() not in ALLOWED and not f.isdir:
             files.remove(f)
     files.sort(key=lambda f: (not f.isdir, f.name))
+    files.sort(key=lambda f: (f.ext == '.nfo' or f.ext == '.md' or f.ext == '.txt'), reverse=True) # Put .nfo, .md and .txt files at the top of the list
 
     return render_template("index.html", base_url=url_for(request.endpoint), url=url_for(request.endpoint, **request.view_args), path=path, files=files, readme=readme, VIDEOEXTS=VIDEOEXTS)
+
+@app.route('/files/save', methods=['POST'])
+def save():
+    ...
+
+@app.route('/files/load/<code>')
+def load(code=""):
+    ...
