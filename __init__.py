@@ -49,25 +49,11 @@ def send_m3u8(path):
 
 def nfo_renderer(path):
     with open(path, 'r', encoding='cp437', errors='ignore') as f:
-        head = Markup("""<style>
-pre {
-    font-family: "ibm_vga_8x16";
-    font-size: 16px;
-    line-height: 100%;
-    position: absolute;
-    left: 50%;
-    transform: translate(-50%, 0);
-}
-@font-face {
-    font-family: "ibm_vga_8x16";
-    src: url("/files/static/Web437_IBM_VGA_8x16.woff") format("woff");
-}
-</style>""")
         body = ''
         for line in f.readlines():
             body += line.rstrip() + '\n'
 
-        return render_template("content.html", body=Markup("<pre>") + body + Markup("</pre>"), head=head)
+        return render_template("nfo.html", body=body)
 
 def md_renderer(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -135,4 +121,19 @@ def index(path=""):
 
 @app.route('/files/sync', methods=['POST'])
 def sync():
-    ...
+    # TODO: rate limit?
+    # TODO: Only process instructions like add/delete instead of pushing the whole list every time?
+    synccode = request.cookies.get('sync')
+    if not synccode:
+        abort(401, 'Tried to sync without a valid sync cookie.')
+
+    data = request.data.decode('utf-8')
+    if len(data) > 1000000: # 1 megabyte of text is quite a lot, but could be increased in future if this becomes a problem
+        abort(413, 'Data received is too large.')
+
+    with open(safe_join(DATA, synccode + '.dat'), 'w', encoding='utf-8') as f:
+        for fn in data.split(';'):
+            if os.path.isfile(safe_join(FILES, fn.lstrip('/'+FILES+'/'))):
+                f.write(fn+'\n')
+
+    return '', 200

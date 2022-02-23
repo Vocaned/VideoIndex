@@ -75,11 +75,12 @@ td {
             fetch("{{ base_url }}/sync", {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'text/plain'
                 },
                 body: seenList.join(';')
             }).then(async res => {
-                alert(await res.text());
+                const txt = await res.text();
+                if (txt.length !== 0) alert(txt);
             });
         } else {
             localStorage.setItem('seen', seenList.join(';'));
@@ -105,7 +106,7 @@ td {
     }
 
     function sync() {
-        var pass = prompt("Enter your key to sync seen files with.\nIf the key has been entered before, your current list of seen files will be overwritten!\nLeave empty to unsync.");
+        var pass = prompt("Enter your key to sync seen files with.\nLeave empty to unsync.");
         document.cookie = "sync=" + pass +";max-age=2147483647;path=/";
         window.location.reload(true); // reload page and ignore cache
     }
