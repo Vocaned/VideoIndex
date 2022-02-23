@@ -12,6 +12,7 @@ app.jinja_env.lstrip_blocks = True
 app.jinja_env.globals['safe_join'] = safe_join
 
 FILES = os.environ.get('FILEPATH', 'files')
+DATA = os.environ.get('DATAPATH', 'data')
 VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
 ALLOWED = ['.srt', '.vtt', '.md', '.nfo', '.txt']
 HIDE_NONVIDEO = True
@@ -121,14 +122,17 @@ def index(path=""):
         if HIDE_NONVIDEO and f.ext.lower() not in VIDEOEXTS and f.ext.lower() not in ALLOWED and not f.isdir:
             files.remove(f)
     files.sort(key=lambda f: (not f.isdir, f.name))
-    files.sort(key=lambda f: (f.ext == '.nfo' or f.ext == '.md' or f.ext == '.txt'), reverse=True) # Put .nfo, .md and .txt files at the top of the list
+    files.sort(key=lambda f: (f.ext in ('.nfo', '.md', '.txt')), reverse=True) # Put .nfo, .md and .txt files at the top of the list
 
-    return render_template("index.html", base_url=url_for(request.endpoint), url=url_for(request.endpoint, **request.view_args), path=path, files=files, readme=readme, VIDEOEXTS=VIDEOEXTS)
+    synccode = request.cookies.get('sync')
+    seen = []
+    if synccode:
+        if os.path.isfile(safe_join(DATA, synccode + '.dat')):
+            with open(safe_join(DATA, synccode + '.dat'), 'r', encoding='utf-8') as f:
+                seen += [s.strip() for s in f.readlines()]
 
-@app.route('/files/save', methods=['POST'])
-def save():
-    ...
+    return render_template("index.html", base_url=url_for(request.endpoint), url=url_for(request.endpoint, **request.view_args), path=path, files=files, syncing=synccode, seen=seen, readme=readme, VIDEOEXTS=VIDEOEXTS)
 
-@app.route('/files/load/<code>')
-def load(code=""):
+@app.route('/files/sync', methods=['POST'])
+def sync():
     ...
