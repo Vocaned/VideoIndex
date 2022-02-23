@@ -1,6 +1,31 @@
-<!DOCTYPE html>
-<html>
-    <body>
-        <h1>Under development</h1>
-    </body>
-</html>
+{% extends "base.html" %}
+{% block style %}
+#container {
+    max-width: 50%;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+}
+{% endblock %}
+{% block head %}
+{{ super() }}
+
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/plyr@3/dist/plyr.css">
+<script src="https://cdn.plyr.io/3.6.12/plyr.polyfilled.js"></script>
+{% endblock %}
+{% block body %}
+<div id="container">
+<video>
+    <source id="source" src="{{ file }}" type="{{ mime }}">
+</video>
+<p id="msg"></p>
+</div>
+
+<script>
+    new Plyr('video', {captions: {active: true}, volume: 0.75});
+    document.getElementsByTagName('source')[0].addEventListener('error', function(event) {
+        document.getElementsByClassName('plyr')[0].style.display = 'none';
+        document.getElementById('msg').innerHTML = 'Your browser could not play this file. You can <a href="{{ file }}">download to play it locally</a>, or use <a href="{{ file }}/m3u8">the m3u8 stream</a>';
+    });
+</script>
+{% endblock %}

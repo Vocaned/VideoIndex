@@ -3,6 +3,7 @@ import os
 import stat
 from datetime import datetime
 import markdown
+import mimetypes
 
 
 app = Flask(__name__, static_url_path='/files/static')
@@ -61,11 +62,11 @@ pre {
     src: url("/files/static/Web437_IBM_VGA_8x16.woff") format("woff");
 }
 </style>""")
-        lines = []
+        body = ''
         for line in f.readlines():
-            lines.append(line.rstrip()) # Strip trailing whitespaces to center the content properly
+            body += line.rstrip() + '\n'
 
-        return render_template("content.html", body=Markup("<pre>") + '\n'.join(lines) + Markup("</pre>"), head=head)
+        return render_template("content.html", body=Markup("<pre>") + body + Markup("</pre>"), head=head)
 
 def md_renderer(path):
     with open(path, 'r', encoding='utf-8') as f:
@@ -85,7 +86,7 @@ def index(path=""):
         filepath = filepath[:-5]
         if not os.path.isfile(filepath):
             abort(404)
-        return render_template('player.html', file=filepath)
+        return render_template('player.html', mime=mimetypes.guess_type(filepath)[0], file=url_for(request.endpoint, **request.view_args).split('/play')[0])
     if filepath.endswith('/m3u8'):
         filepath = filepath[:-5]
         path = path[:-5]
@@ -105,6 +106,9 @@ def index(path=""):
             return md_renderer(filepath)
         elif ext == '.txt':
             return txt_renderer(filepath)
+
+        if os.environ.get("FLASK_RUN_FROM_CLI"): # Serve files in dev environment
+            return send_from_directory(FILES, path)
         abort(500)
 
     readme = None

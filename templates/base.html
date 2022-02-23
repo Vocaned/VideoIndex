@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% block head %}
+        <meta charset="UTF-8">
+        <style>
+            :root {
+                --bg: #FFFFFF;
+                --fg: #000000;
+                --ln: #0f0ff0;
+                --ls: #a00ff0;
+            }
+            .dark {
+                --bg: #0a0a0a;
+                --fg: #FFFFFF;
+                --ln: #a0a0f0;
+                --ls: #f0aff0;
+            }
+            body {
+                background-color: var(--bg);
+                color: var(--fg);
+            }
+            a {
+                color: var(--ln);
+            }
+            {% block style %}{% endblock %}
+        </style>
+        {% endblock %}
+    </head>
+    <body>
+        {% block body %}{% endblock %}
+        <script>
+            if (localStorage.getItem('dark') === 'true') document.body.classList.value = 'dark';
+        </script>
+    </body>
+</html>
