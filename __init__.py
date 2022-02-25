@@ -17,6 +17,11 @@ VIDEOEXTS = ['.webm', '.mp4', '.mkv', '.avi', '.mov', '.flv']
 ALLOWED = ['.srt', '.vtt', '.md', '.nfo', '.txt']
 HIDE_NONVIDEO = True
 
+if not os.path.exists(FILES):
+    os.mkdir(FILES)
+if not os.path.exists(DATA):
+    os.mkdir(DATA)
+
 class File:
     def __init__(self, path):
         self.name = os.path.split(path)[1]
