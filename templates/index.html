@@ -60,7 +60,7 @@ td {
     var seenList = {{ seen|safe }};
     {% else %}
     var seenList = (localStorage.getItem('seen') || '').split(';').filter(Boolean);
-    {% endif % }
+    {% endif %}
 
     function lightswitch() {
         dark = !dark;
