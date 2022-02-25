@@ -56,12 +56,11 @@ td {
 <script>
     var icon = ["☾", "☀"];
     var dark = (localStorage.getItem('dark') === 'true');
-    var syncing = {% if syncing %}true{% else %}false{% endif %};
-    if (syncing) {
-        var seenList = {{ seen|safe }};
-    } else {
-        seenList = (localStorage.getItem('seen') || '').split(';').filter(Boolean);
-    }
+    {% if syncing %}
+    var seenList = {{ seen|safe }};
+    {% else %}
+    var seenList = (localStorage.getItem('seen') || '').split(';').filter(Boolean);
+    {% endif % }
 
     function lightswitch() {
         dark = !dark;
