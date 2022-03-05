@@ -4,6 +4,7 @@ import stat
 from datetime import datetime
 import markdown
 import mimetypes
+from urllib.parse import unquote
 
 
 app = Flask(__name__, static_url_path='/files/static')
@@ -138,6 +139,7 @@ def sync():
 
     with open(safe_join(DATA, synccode + '.dat'), 'w', encoding='utf-8') as f:
         for fn in data.split(';'):
+            fn = unquote(fn)
             if os.path.isfile(safe_join(FILES, fn.lstrip('/'+FILES+'/'))):
                 f.write(fn+'\n')
 
