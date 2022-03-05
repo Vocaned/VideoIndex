@@ -139,8 +139,7 @@ def sync():
 
     with open(safe_join(DATA, synccode + '.dat'), 'w', encoding='utf-8') as f:
         for fn in data.split(';'):
-            fn = unquote(fn)
-            if os.path.isfile(safe_join(FILES, fn.lstrip('/'+FILES+'/'))):
+            if os.path.isfile(safe_join(FILES, unquote(fn).lstrip('/'+FILES+'/'))):
                 f.write(fn+'\n')
 
     return '', 200
