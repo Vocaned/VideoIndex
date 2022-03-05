@@ -70,20 +70,20 @@ td {
     }
 
     function updateSeen() {
-        if (syncing) {
-            fetch("{{ base_url }}/sync", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain'
-                },
-                body: seenList.join(';')
-            }).then(async res => {
-                const txt = await res.text();
-                if (txt.length !== 0) alert(txt);
-            });
-        } else {
-            localStorage.setItem('seen', seenList.join(';'));
-        }
+        {% if syncing %}
+        fetch("{{ base_url }}/sync", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain'
+            },
+            body: seenList.join(';')
+        }).then(async res => {
+            const txt = await res.text();
+            if (txt.length !== 0) alert(txt);
+        });
+        {% else %}
+        localStorage.setItem('seen', seenList.join(';'));
+        {% endif %}
     }
 
     function seen(el) {
