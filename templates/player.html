@@ -25,7 +25,7 @@
     new Plyr('video', {captions: {active: true}, volume: 0.75});
     document.getElementsByTagName('source')[0].addEventListener('error', function(event) {
         document.getElementsByClassName('plyr')[0].style.display = 'none';
-        document.getElementById('msg').innerHTML = 'Your browser could not play this file. You can <a href="{{ file }}">download to play it locally</a>, or use <a href="{{ file }}/m3u8">the m3u8 stream</a>';
+        document.getElementById('msg').innerHTML = 'Your browser could not play this file. You can <a href="{{ file }}">download to play it locally</a>, or <a href="{{ file }}/m3u8">use the m3u8 stream</a>';
     });
 </script>
 {% endblock %}

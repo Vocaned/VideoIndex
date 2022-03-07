@@ -106,7 +106,8 @@ td {
 
     function sync() {
         var pass = prompt("Enter your key to sync seen files with.\nLeave empty to unsync.");
-        document.cookie = "sync=" + pass +";max-age=2147483647;path=/";
+        if (!pass) return;
+        document.cookie = "sync=" + encodeURIComponent(pass) +";max-age=2147483647;path=/";
         window.location.reload(true); // reload page and ignore cache
     }
 
